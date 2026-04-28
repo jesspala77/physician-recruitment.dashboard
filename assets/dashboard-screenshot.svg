@@ -1,0 +1,12 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" width="800" height="450" viewBox="0 0 800 450">
+  <rect width="800" height="450" fill="#f4f7fb"/>
+  <rect x="40" y="40" width="720" height="120" rx="16" fill="#ffffff" stroke="#d1d9e6" stroke-width="2"/>
+  <rect x="40" y="190" width="340" height="180" rx="12" fill="#ffffff" stroke="#d1d9e6" stroke-width="2"/>
+  <rect x="420" y="190" width="340" height="180" rx="12" fill="#ffffff" stroke="#d1d9e6" stroke-width="2"/>
+  <path d="M80 90 h120" stroke="#6c8cd5" stroke-width="12" stroke-linecap="round"/>
+  <path d="M230 90 h120" stroke="#82c47c" stroke-width="12" stroke-linecap="round"/>
+  <text x="60" y="270" font-family="Arial, sans-serif" font-size="24" fill="#5a6b8c">Recruitment dashboard</text>
+  <text x="60" y="310" font-family="Arial, sans-serif" font-size="18" fill="#7a8ba3">Interactive analytics and model training</text>
+  <text x="430" y="250" font-family="Arial, sans-serif" font-size="24" fill="#5a6b8c">Project preview</text>
+  <text x="430" y="285" font-family="Arial, sans-serif" font-size="18" fill="#7a8ba3">Replace with a live app screenshot before publishing</text>
+</svg>
