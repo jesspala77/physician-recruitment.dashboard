@@ -17,6 +17,7 @@ sys.path.insert(0, str(project_root))
 from utils.data import load_data, get_feature_columns
 from models.predict import load_model
 from models.train import train_model
+from utils.clinicaltrials_api import get_api_version, locations_to_dataframe, search_studies, studies_to_dataframe
 
 # Constants
 MATCH_COLOR_MAP = {'Strong Match': '#2ecc71', 'Weak Match': '#e74c3c'}
@@ -182,6 +183,24 @@ def reload_predictor_model():
     load_predictor_model.clear()
     return load_predictor_model()
 
+
+@st.cache_data(ttl=6 * 60 * 60)
+def load_trial_api_metadata():
+    """Load ClinicalTrials.gov API metadata with caching."""
+    return get_api_version()
+
+
+@st.cache_data(ttl=30 * 60)
+def load_live_trials(condition: str, location: str, overall_status: str, phase: str, page_size: int):
+    """Load live study search results from ClinicalTrials.gov."""
+    return search_studies(
+        condition=condition,
+        location=location,
+        overall_status=overall_status,
+        phase=phase,
+        page_size=page_size,
+    )
+
 # Try to load data and model
 try:
     df = load_dashboard_data()
@@ -198,7 +217,7 @@ except Exception as e:
 
 page = st.sidebar.radio(
     "Navigation",
-    ["Dashboard", "Data Explorer", "Search", "Match Analysis", "Model Insights", "Train Model", "Predictions"],
+    ["Dashboard", "Data Explorer", "Search", "Match Analysis", "Model Insights", "Train Model", "Predictions", "Live Trial Finder"],
     help="Select a page to navigate"
 )
 
@@ -725,6 +744,95 @@ elif page == "Predictions":
                 
             except Exception as e:
                 st.error(f"Prediction Error: {e}")
+
+
+# ============================================================================
+# PAGE: LIVE TRIAL FINDER
+# ============================================================================
+
+elif page == "Live Trial Finder":
+    st.subheader("Live Trial Finder")
+    st.info("Search current ClinicalTrials.gov studies to identify active and recruiting trials by condition, location, and phase.")
+
+    try:
+        metadata = load_trial_api_metadata()
+        st.caption(
+            f"ClinicalTrials.gov API v{metadata['api_version']} | Data timestamp: {metadata['data_timestamp']}"
+        )
+    except Exception as e:
+        st.warning(f"Could not load API metadata: {e}")
+
+    with st.form("live_trial_search"):
+        col1, col2 = st.columns(2)
+        with col1:
+            live_condition = st.text_input("Condition or disease", value="chronic rhinosinusitis")
+            live_location = st.text_input("Location", value="United States")
+        with col2:
+            live_status = st.selectbox(
+                "Overall status",
+                ["RECRUITING", "NOT_YET_RECRUITING", "ACTIVE_NOT_RECRUITING", "COMPLETED", "All"],
+                index=0,
+            )
+            live_phase = st.selectbox(
+                "Phase",
+                ["All", "EARLY_PHASE1", "PHASE1", "PHASE2", "PHASE3", "PHASE4"],
+                index=0,
+            )
+
+        live_page_size = st.slider("Max studies", min_value=5, max_value=50, value=15, step=5)
+        live_submit = st.form_submit_button("Search live studies", type="primary")
+
+    if live_submit:
+        try:
+            with st.spinner("Loading current studies from ClinicalTrials.gov..."):
+                live_studies = load_live_trials(
+                    live_condition,
+                    live_location,
+                    live_status,
+                    live_phase,
+                    live_page_size,
+                )
+
+            if not live_studies:
+                st.warning("No studies matched the current search filters.")
+            else:
+                studies_df = studies_to_dataframe(live_studies)
+                locations_df = locations_to_dataframe(live_studies)
+
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    st.metric("Studies returned", len(studies_df))
+                with col2:
+                    st.metric("Total study sites", int(studies_df['locations'].sum()))
+                with col3:
+                    st.metric("Recruiting sites", int(studies_df['recruiting_locations'].sum()))
+
+                st.divider()
+                st.write("**Study summary**")
+                st.dataframe(
+                    studies_df,
+                    use_container_width=True,
+                    hide_index=True,
+                    column_config={
+                        'study_url': st.column_config.LinkColumn('Study record'),
+                        'has_results': st.column_config.CheckboxColumn('Results posted'),
+                    },
+                )
+
+                st.divider()
+                st.write("**Recruiting site details**")
+                recruiting_locations_df = locations_df[locations_df['status'] == 'RECRUITING'].copy()
+                if recruiting_locations_df.empty:
+                    st.info("No recruiting locations were listed in the returned studies.")
+                else:
+                    st.dataframe(
+                        recruiting_locations_df,
+                        use_container_width=True,
+                        hide_index=True,
+                    )
+
+        except Exception as e:
+            st.error(f"Live trial search failed: {e}")
 
 # ============================================================================
 # FOOTER

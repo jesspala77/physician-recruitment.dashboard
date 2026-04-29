@@ -13,7 +13,8 @@ This dashboard is designed as a practical data product sample. It lets a reviewe
 - Search workflows for physician IDs and site IDs
 - Model insights with feature importance and agreement checks
 - In-app model retraining and single-record prediction form
-- Automated tests for data utilities, training, and prediction flow
+- Live ClinicalTrials.gov study search for current recruiting trials
+- Automated tests for data utilities, training, prediction flow, and API helpers
 
 ## Tech stack
 
@@ -56,6 +57,10 @@ python -m pip install -r requirements.txt
 python -m streamlit run .\streamlit_app.py
 ```
 
+## Live data integration
+
+The dashboard now includes a live trial finder powered by the ClinicalTrials.gov v2 API for current study discovery. This makes the project useful beyond the bundled CSV demo data by exposing currently recruiting and active studies with site-level details.
+
 ## App preview
 
 ![Dashboard preview](./assets/dashboard-screenshot.svg)
@@ -92,6 +97,11 @@ The app can be deployed to Streamlit Community Cloud.
 1. Push the project to GitHub.
 2. Create a new app in Streamlit Community Cloud.
 3. Set the entry point to `streamlit_app.py`.
+
+## Data sources
+
+- Demo recruitment matching data in `crssnp_recruitment_data.csv`
+- Live study metadata from the ClinicalTrials.gov v2 API
 
 ## Portfolio checklist
 
